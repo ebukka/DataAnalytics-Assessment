@@ -124,7 +124,7 @@ Estimate each customer's CLV using a simplified profit model:
 
 ## 📤 Submission Instructions
 
-- Repository: [https://github.com/your-username/DataAnalytics-Assessment](https://github.com/ebukka/DataAnalytics-Assessment)
+- Repository: [https://github.com/ebukka/DataAnalytics-Assessment](https://github.com/ebukka/DataAnalytics-Assessment)
 - All files are committed as per instructions
 - SQL queries are formatted, commented, and clearly organized
 
