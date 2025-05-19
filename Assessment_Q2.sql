@@ -1,4 +1,8 @@
+-- Drop view if it already exists to avoid conflict
+
 DROP VIEW IF EXISTS transaction_frequency;
+
+-- Create view to identify customers with both savings and investment plans
 
 CREATE VIEW transaction_frequency AS
 SELECT 
