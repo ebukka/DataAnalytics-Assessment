@@ -49,54 +49,76 @@ DataAnalytics-Assessment/
 
 ### `Assessment_Q1.sql` – High-Value Customers with Multiple Products
 
-**Goal:** Identify customers who have at least one **funded savings** plan and one **funded investment** plan. Results are sorted by total deposit amount.  
+**Goal:**  
+Identify customers who have at least one **funded savings** plan and one **funded investment** plan. Results are sorted by total deposit amount.
+
 **Approach:**  
 - Filter savings accounts with `confirmed_amount > 0` and `is_regular_savings = 1`
-- Filter investment plans with `confirmed_amount > 0` and `is_a_fund = 1`
-- Join with `users_customuser` and aggregate totals.
+- Filter investment plans with `amount > 0`, excluding deleted, archived, donation, and wallet-based plans
+- Join with `users_customuser` on customer ID
+- Aggregate count and sum for both product types and calculate total deposits
+
+**Challenges:**  
+- Filtering out non-eligible investment plans based on multiple boolean flags  
+- Ensuring customers exist in **both** datasets (savings and investments) using inner joins  
+- Preventing null sums by applying filters before aggregation
 
 ---
 
 ### `Assessment_Q2.sql` – Transaction Frequency Analysis
 
-**Goal:** Segment customers based on how frequently they transact.  
+**Goal:**  
+Segment customers based on how frequently they transact.
+
 **Approach:**  
-- Count total savings transactions per user per month.
-- Calculate average per user.
-- Categorize as:
+- Join `users_customuser` and `savings_savingsaccount` by user ID  
+- Count total savings transactions per user  
+- Calculate average monthly transactions using `TIMESTAMPDIFF`  
+- Categorize users as:
   - High (≥10/month)
   - Medium (3–9/month)
   - Low (≤2/month)
+
+**Challenges:**  
+- Ensuring correct month span calculation even when first and last transaction are in the same month  
+- Avoiding division by zero by padding `+1` to the denominator  
+- Accurate classification using rounded average transactions
 
 ---
 
 ### `Assessment_Q3.sql` – Account Inactivity Alert
 
-**Goal:** Identify active savings and investment accounts with **no inflow** for over **365 days**.  
+**Goal:**  
+Identify active savings and investment accounts with **no inflow** for over **365 days**.
+
 **Approach:**  
-- Filter by transaction date using `CURDATE() - last_transaction_date`
-- Include only accounts with `confirmed_amount > 0`
-- Return type (savings/investment), plan ID, owner, and inactivity duration.
+- Filter savings accounts with `confirmed_amount > 0` and transaction date older than 1 year  
+- Filter valid investment plans with `amount > 0`, created over a year ago and not marked as deleted, archived, donation, or wallet  
+- Return type (savings/investment), plan ID, user ID, and inactivity duration in days
+
+**Challenges:**  
+- Choosing the correct date field to reflect last transaction (e.g., `transaction_date` vs. `created_on`)  
+- Unifying output schema from two distinct sources (`savings` and `investments`) using `UNION`  
+- Avoiding inclusion of inactive, deleted, or special-type plans
 
 ---
 
 ### `Assessment_Q4.sql` – Customer Lifetime Value (CLV) Estimation
 
-**Goal:** Estimate each customer's CLV using a simplified profit model:
-- `CLV = (total_transactions / tenure_months) * 12 * avg_profit_per_transaction`
+**Goal:**  
+Estimate each customer's CLV using a simplified profit model:  
+`CLV = (total_transactions / tenure_months) * 12 * avg_profit_per_transaction`
 
 **Approach:**  
-- Calculate account tenure in months
-- Count transactions per user
-- Use 0.1% of transaction value as average profit
+- Calculate each customer’s tenure in months using `DATEDIFF`  
+- Count confirmed savings transactions and compute their average value  
+- Use 0.1% of transaction value as average profit  
+- Multiply by annualized transaction rate to estimate CLV
 
----
-
-## 🚧 Challenges Faced
-
-- **Full outer joins in MySQL:** MySQL does not support full outer joins natively. I worked around this using `UNION` of `LEFT JOIN` and `RIGHT JOIN`.
-- **Duplicate column names:** When using `SELECT *`, I encountered naming conflicts; this was resolved by selecting specific columns or aliasing.
-- **Date calculations:** Ensured consistent use of `DATEDIFF()` and `CURDATE()` for accurate date-based computations.
+**Challenges:**  
+- Preventing division by zero for very recent customers (ensured `tenure_months > 0`)  
+- Maintaining precision with `ROUND()` while handling monetary values  
+- Balancing simplicity and realism in a business-usable CLV model
 
 ---
 
@@ -107,9 +129,4 @@ DataAnalytics-Assessment/
 - SQL queries are formatted, commented, and clearly organized
 
 ---
-
-## ⚠️ Notes
-
-- All queries are written from scratch and are my own original work.
-- 
 
